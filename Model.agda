@@ -108,7 +108,7 @@ _[_] : Tm Γ A → (σ : Sub Δ Γ) → Tm Δ (A [ σ ]T)
 S (t [ σ ]) γ    = t .S (σ .S γ)
 P (t [ σ ]) γ γᴾ = t .P (σ .S γ) (σ .P γ γᴾ)
 
-p : (A : Ty Γ i) → Sub (Γ ▶ A) Γ
+p : (A : Ty {i} Γ j) → Sub (Γ ▶ A) Γ
 S (p A)   (γ  , _) = γ
 P (p A) _ (γᴾ , _) = γᴾ
 
@@ -189,25 +189,45 @@ Piβ = refl
 Piη : Lam {i}{Γ}{j}{A}{k} (App t) ≡ t
 Piη = refl
 
-
--- Empty
+-- Sigma
 --------------------------------------------------------------------------------
 
-Empty : Ty {i} Γ lzero
-S Empty _ = ⊤
-P Empty _ _ _ = ⊥
-E Empty _ = tt
+Sg : ∀ {i j k Γ}(A : Ty {i} Γ j) → Ty (Γ ▶ A) k → Ty Γ (j ⊔ k)
+S (Sg A B) γ = Σ (A . S γ) λ α → B .S (γ , α)
+P (Sg A B) γ γᴾ (α , β) = Σ (A .P _ γᴾ α) λ αᴾ → B .P _ (γᴾ , αᴾ) β
+E (Sg A B) γ = (A .E γ) , B .E (γ , (A .E γ))
 
-Empty[] : Empty [ σ ]T ≡ Empty
-Empty[] = refl
+sub1 : ∀ {σ : Sub {i}{j} Δ Γ}{A : Ty Γ k} → Sub (Δ ▶ A [ σ ]T) (Γ ▶ A)
+S (sub1 {σ = σ} {A}) (δ , α) = (σ .S δ) , α
+P (sub1 {σ = σ} {A}) (δ , α) (δᴾ , αᴾ) = (P σ δ δᴾ) , αᴾ
 
-Exfalso : Tm Γ Empty → Tm Γ A
-S (Exfalso {A = A} t) γ    = A .E γ
-P (Exfalso {A = A} t) γ γᴾ = ⊥-elim (t .P _ γᴾ)
+Sg[] : ∀ {i' i j k Δ Γ A B}{σ : Sub {i'}{i} Δ Γ}
+       → Sg {i}{j}{k}{Γ} A B [ σ ]T ≡ Sg {i'}{j}{k}{Δ} (A [ σ ]T) (B [ sub1 {σ = σ}{A} ]T)
+Sg[] = refl
 
-Exfalso[] : Exfalso {A = A} t [ σ ] ≡ Exfalso (t [ σ ])
-Exfalso[] = refl
+Pair : ∀ {i j k Γ}{A : Ty {i} Γ j}{B : Ty (Γ ▶ A) k} → (t : Tm Γ A) → Tm Γ (B [ id ,ₛ t ]T) → Tm Γ (Sg A B)
+S (Pair t u) γ    = (t .S γ) , u .S γ
+P (Pair t u) γ γᴾ = (t .P γ γᴾ) , (u .P γ γᴾ)
 
+Pair[] : ∀ {σ : Sub {l}{i} Δ Γ} → Pair {i}{j}{k}{Γ}{A}{B} t u [ σ ] ≡
+                                  Pair {l}{j}{k}{Δ}{A [ σ ]T} {B [ sub1 {σ = σ}{A} ]T} (t [ σ ]) (u [ σ ])
+Pair[] = refl
+
+Fst : Tm Γ (Sg A B) → Tm Γ A
+S (Fst t) γ = ₁ (S t γ)
+P (Fst t) γ Γᴾ = ₁ (P t γ Γᴾ)
+
+Snd : ∀ {i j k Γ}{A : Ty Γ j}{B : Ty (Γ ▶ A) k}(t : Tm {i} Γ (Sg A B)) → Tm Γ (B [ id ,ₛ Fst {B = B} t ]T)
+S (Snd t) γ = ₂ (S t γ)
+P (Snd t) γ Γᴾ = ₂ (P t γ Γᴾ)
+
+Fstβ : ∀ {i j k Γ}{A : Ty {i} Γ j}{B : Ty (Γ ▶ A) k}{t : Tm Γ A}{u : Tm Γ (B [ id ,ₛ t ]T)}
+       → Fst {B = B} (Pair {B = B} t u) ≡ t
+Fstβ = refl
+
+Sndβ : ∀ {i j k Γ}{A : Ty {i} Γ j}{B : Ty (Γ ▶ A) k}{t : Tm Γ A}{u : Tm Γ (B [ id ,ₛ t ]T)}
+       → Snd {B = B} (Pair {B = B} t u) ≡ u
+Sndβ = refl
 
 -- Nat
 --------------------------------------------------------------------------------

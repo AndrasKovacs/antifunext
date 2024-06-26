@@ -80,7 +80,7 @@ in non-error environments.
 Now, `λ x. x` and `λ x. one` are distinct in the model, and we can actually
 refute funext: terms are required to produce non-error outputs from non-error
 inputs, and there is no such term as an inhabitant of funext. In other words,
-pointwise equality of functions in the model means that trhe functions agree on non-error
+pointwise equality of functions in the model means that the functions agree on non-error
 inputs, but that's not enough to conclude that the functions are equal.
 
 Moreover, although I didn't formalize this, it's clear that the negation of

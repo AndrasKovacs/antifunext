@@ -133,6 +133,11 @@ qβ = refl
       → (_,ₛ_ {A = A} σ t) ∘ δ ≡ (_,ₛ_ {A = A} (σ ∘ δ) (t [ δ ]))
 ,ₛ∘ = refl
 
+-- redefining (σ ∘ p ,ₛ q), just because Agda inference kinda fails
+-- if I write it out internally
+lift : (σ : Sub {i}{j} Γ Δ)(A : Ty Δ k) → Sub (Γ ▶ A [ σ ]T) (Δ ▶ A)
+S (lift σ A) (γ , α)           = S σ γ , α
+P (lift σ A) (γ , α) (γᴾ , αᴾ) = (P σ γ γᴾ) , αᴾ
 
 -- Universes
 --------------------------------------------------------------------------------
@@ -179,6 +184,10 @@ Lam : Tm (Γ ▶ A) B → Tm Γ (Pi {i}{j = j}{k = k} A B)
 S (Lam t) γ x       = t .S (γ , x)
 P (Lam t) γ γᴾ x xᴾ = t .P (γ , x) (γᴾ , xᴾ)
 
+Lam[] : ∀ {i' i j k Γ Δ}{σ : Sub {i'}{i} Δ Γ}{A : Ty {i} Γ j}{B : Ty (Γ ▶ A) k}{t : Tm (Γ ▶ A) B}
+        → Lam {A = A} t [ σ ] ≡ Lam {A = A [ σ ]T} (t [ lift σ A ])
+Lam[] = refl
+
 App : ∀ {i j k Γ A B} → Tm Γ (Pi {i}{j = j}{k = k} A B) → Tm (Γ ▶ A) B
 S (App t) (γ , x)           = t .S γ x
 P (App t) (γ , x) (γᴾ , xᴾ) = t .P γ γᴾ x xᴾ
@@ -197,12 +206,8 @@ S (Sg A B) γ = Σ (A . S γ) λ α → B .S (γ , α)
 P (Sg A B) γ γᴾ (α , β) = Σ (A .P _ γᴾ α) λ αᴾ → B .P _ (γᴾ , αᴾ) β
 E (Sg A B) γ = (A .E γ) , B .E (γ , (A .E γ))
 
-sub1 : ∀ {σ : Sub {i}{j} Δ Γ}{A : Ty Γ k} → Sub (Δ ▶ A [ σ ]T) (Γ ▶ A)
-S (sub1 {σ = σ} {A}) (δ , α) = (σ .S δ) , α
-P (sub1 {σ = σ} {A}) (δ , α) (δᴾ , αᴾ) = (P σ δ δᴾ) , αᴾ
-
 Sg[] : ∀ {i' i j k Δ Γ A B}{σ : Sub {i'}{i} Δ Γ}
-       → Sg {i}{j}{k}{Γ} A B [ σ ]T ≡ Sg {i'}{j}{k}{Δ} (A [ σ ]T) (B [ sub1 {σ = σ}{A} ]T)
+       → Sg {i}{j}{k}{Γ} A B [ σ ]T ≡ Sg {i'}{j}{k}{Δ} (A [ σ ]T) (B [ lift σ A ]T)
 Sg[] = refl
 
 Pair : ∀ {i j k Γ}{A : Ty {i} Γ j}{B : Ty (Γ ▶ A) k} → (t : Tm Γ A) → Tm Γ (B [ id ,ₛ t ]T) → Tm Γ (Sg A B)
@@ -210,7 +215,7 @@ S (Pair t u) γ    = (t .S γ) , u .S γ
 P (Pair t u) γ γᴾ = (t .P γ γᴾ) , (u .P γ γᴾ)
 
 Pair[] : ∀ {σ : Sub {l}{i} Δ Γ} → Pair {i}{j}{k}{Γ}{A}{B} t u [ σ ] ≡
-                                  Pair {l}{j}{k}{Δ}{A [ σ ]T} {B [ sub1 {σ = σ}{A} ]T} (t [ σ ]) (u [ σ ])
+                                  Pair {l}{j}{k}{Δ}{A [ σ ]T} {B [ lift σ A ]T} (t [ σ ]) (u [ σ ])
 Pair[] = refl
 
 Fst : Tm Γ (Sg A B) → Tm Γ A
@@ -288,15 +293,9 @@ P (NatElim {i} {j} {Γ} B bz bs n) γ γᴾ =
       (λ {_}{nᴾ} hyp → bs .P _ ((γᴾ , nᴾ) , hyp))
       (n .P _ γᴾ)
 
--- substitution helper, because Agda can't infer implicits inline
-liftσsuc : ∀ {i' i j Δ Γ}(σ : Sub {i'}{i} Δ Γ)(B : Ty (Γ ▶ Nat) j) →
-          Sub (Δ ▶ Nat ▶ B [ (σ ∘ p Nat) ,ₛ q Nat ]T) (Γ ▶ Nat ▶ B)
-S (liftσsuc σ B) ((γ , n) , b) = (S σ γ , n) , b
-P (liftσsuc σ B) ((γ , n) , b) ((γᴾ , nᴾ) , bᴾ) = (P σ γ γᴾ , nᴾ) , bᴾ
-
 NatElim[] : ∀ {i' i j Δ Γ}{σ : Sub {i'}{i} Δ Γ}{B z s n}
             → NatElim {i}{j}{Γ} B z s n [ σ ]
-            ≡ NatElim (B [ (σ ∘ p Nat) ,ₛ q Nat ]T) (z [ σ ]) (s [ liftσsuc σ B ]) (n [ σ ])
+            ≡ NatElim (B [ (σ ∘ p Nat) ,ₛ q Nat ]T) (z [ σ ]) (s [ lift (lift σ Nat) B ]) (n [ σ ])
 NatElim[] = refl
 
 NatElimZero : ∀{i j Γ B z s} → NatElim {i}{j}{Γ} B z s Zero ≡ z
@@ -342,6 +341,7 @@ P (Refl t) γ γᴾ = refl _
 Refl[] : Refl t [ σ ] ≡ Refl (t [ σ ])
 Refl[] = refl
 
+-- substitutions defined externally, again to avoid implicit arg inference issues
 -- ((id ,ₛ a) ,ₛ Refl a)
 rsub : ∀ Γ A (a : Tm {i}{j} Γ A) → Sub Γ (Γ ▶ A ▶ Id (A [ p A ]T) (a [ p A ]) (q A))
 S (rsub Γ A a) γ    = (γ , a .S γ) , refl

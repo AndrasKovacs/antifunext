@@ -56,7 +56,7 @@ terms, omitting universe levels:
     ...
 
 We only add extra points explicitly to positive types, because functions can
-be eta-expanded to constant errors and pairs to pairs of errors.
+be inhabited by constant errors and pairs to pairs of errors.
 
 However, this doesn't refute funext, because *every* type is inhabited in the
 model, including the type of funext.

@@ -55,8 +55,8 @@ terms, omitting universe levels:
 
     ...
 
-We only add extra points explicitly to positive types, because functions can
-be inhabited by constant errors and pairs to pairs of errors.
+We only add extra points explicitly to positive types, because function types can
+be inhabited by constant errors and  sigmas by pairs of errors.
 
 However, this doesn't refute funext, because *every* type is inhabited in the
 model, including the type of funext.

@@ -3,8 +3,8 @@
 Checked with: Agda-2.6.4.3, stdlib 2.0
 
 A model of Martin-Löf type theory (with pi, sigma, nat, identity, countable
-universes) where function extensionality is false. It's due to Pierre-Marie
-Pédrot who explained this to me at the TYPES 2024 conference. Other sources:
+universes) where function extensionality is false. Pierre-Marie explained this to me at the 
+TYPES 2024 conference. Other sources:
 
 - Paper by Pédrot & Tabareau: https://people.mpi-sws.org/~dreyer/papers/pedrot-exceptional/paper.pdf
 - Chapter 3 of Thomas Streicher's habilitation thesis: https://www2.mathematik.tu-darmstadt.de/~streicher/HabilStreicher.pdf
